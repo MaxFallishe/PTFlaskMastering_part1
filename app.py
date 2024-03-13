@@ -6,6 +6,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///notes.db'
 db = SQLAlchemy(app)
 
+
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -14,6 +15,7 @@ class Note(db.Model):
 
     def __repr__(self):
         return f"Note('{self.title}', '{self.created}')"
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -31,10 +33,20 @@ def index():
     notes = Note.query.order_by(Note.created.desc()).all()
     return render_template('index.html', notes=notes)
 
+
 @app.route('/delete/<int:note_id>', methods=['POST'])
 def delete_note(note_id):
     note = Note.query.get_or_404(note_id)
     db.session.delete(note)
+    db.session.commit()
+    return redirect(url_for('index'))
+
+
+@app.route('/edit/<int:note_id>', methods=['POST'])
+def edit_note(note_id):
+    note = Note.query.get_or_404(note_id)
+    note.title = request.form['title']
+    note.content = request.form['content']
     db.session.commit()
     return redirect(url_for('index'))
 
